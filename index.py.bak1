@@ -1,0 +1,42 @@
+#!/usr/bin/env python3
+name = input("Welcome! What's your name? ")
+print(f"Greetings, {name}!")
+
+class Action:
+    def __init__(self, desc, next_room):
+        self.desc = desc
+        self.next_room = next_room
+
+
+class Room:
+    def __init__(self, desc, actions):
+        self.desc = desc
+        self.actions = actions
+
+
+
+ROOMS = {
+    'lesson': Room(
+        desc='You are in the teaching room. You see a Kellan, a Maria, and a Brooke. Exits are: DOOR.',
+        actions={
+            'door': Action(desc='You have gone through the door and are now in the hallway.', next_room='hallway'),
+            'kellan': Action(desc='Kellan says Hi!', next_room='lesson')
+        }
+    ),
+    'hallway': Room(desc='You are in the hallway.', actions={})
+
+}
+
+room_name = 'lesson'
+
+while True:
+    room = ROOMS[room_name]
+    print(room.desc)
+    action_name = input('> ').lower()
+    if action_name in room.actions:
+        action = room.actions[action_name]
+        print(action.desc)
+        room_name = action.next_room
+    else:
+        print('Invalid Command!')
+
