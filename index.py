@@ -1,52 +1,53 @@
 #!/usr/bin/env python3
 
 INVENTORY = []
+name = input("What's your name? ");
 
-room_learning_took_soda = False
-def room_learning():
-    global room_learning_took_soda
-    print("You are in room #312. You see a Kellan, a Maria, and a Brooke.")
-    if not room_learning_took_soda: print("There is a can of soda on the table.")
-    print("Exits: DOOR")
-    command = input("> ").lower()
+##
+# 1. Convert data into serializable format
+# 2. Store data when we change it
+# 3. Read state when we start
+## 
+
+print("Hello, " + name + "!");
+
+def room_office(state):
+    print("You are in an office. In front of you is a desk with a computer and a can of soda. To your left is a wall with a whiteboard on it. To your right are floor-to-ceiling windows. Behind you is a door.")
+    
+    command = input("$ ")
+    
     if command == "door":
-        print("You have gone through the door.")
-        room_hallway()
-    elif command == "kellan":
-        print("Kellan says, 'Hi!'")
-        room_learning()
-    elif command == "maria":
-        print("Maria is busy doing coding")
-        room_learning()
-    elif command == "brooke":
-        print("Brooke is writing a story")
-        room_learning()
-    elif command == "take the soda" and not room_learning_took_soda:
-        print("You pick up the soda. It's nice and cold.")
-        room_learning_took_soda = True
+        room_hallway();
+    elif command == "soda":
+        print("You pick up the soda. It's very cold.")
         INVENTORY.append('soda')
-        room_learning()
+        room_office()
     else:
-        print("INVALID COMMAND!!!")
-        room_learning()
+        print("INVALID COMMAND!")
+        room_office()
 
-room_hallway_gave_matt_soda = False
+room_hallway_gave_soda = False
 def room_hallway():
-    global room_hallway_gave_matt_soda
-    print("You are in the hallway. It's very spoooooky.")
-    if not room_hallway_gave_matt_soda: print("Matt is here, he's very thirsty.")
-    print("Exits: LEARNING")
-    command = input("> ").lower()
-    if command == "learning":
-        print("You are going back to the learning room.")
-        room_learning()
-    elif command == "give matt the soda" and not room_hallway_gave_matt_soda and 'soda' in INVENTORY:
-        print("You give Matt the soda. He says thanks, gulps it down, and leaves.")
+    global room_hallway_gave_soda
+    print("You are now in the hallway.")
+    if not room_hallway_gave_soda:
+        print("Matt is here.")
+    print("You can go down the hallway or go back into the room.")
+    command = input("$ ")
+    if command == 'give matt the soda' and 'soda' in INVENTORY and not room_hallway_gave_soda:
+        print("You give matt the soda. He gulps it down thankfully, and leaves.")
+        room_hallway_gave_soda = True
         INVENTORY.remove('soda')
-        room_hallway_gave_matt_soda = True
         room_hallway()
     else:
-        print("INVALID COMMAND!!!")
+        print("INVALID COMMAND!")
         room_hallway()
 
-room_learning()
+    
+class GameState:
+    def __init__(self):
+        self.inventory = []
+
+state = GameState()
+
+room_office(state) # this must be last
