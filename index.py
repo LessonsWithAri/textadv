@@ -1,53 +1,92 @@
 #!/usr/bin/env python3
+import os
+import sys
+import random
+import pickle
 
-INVENTORY = []
-name = input("What's your name? ");
-
-##
-# 1. Convert data into serializable format
-# 2. Store data when we change it
-# 3. Read state when we start
-## 
-
-print("Hello, " + name + "!");
-
-def room_office(state):
-    print("You are in an office. In front of you is a desk with a computer and a can of soda. To your left is a wall with a whiteboard on it. To your right are floor-to-ceiling windows. Behind you is a door.")
-    
-    command = input("$ ")
-    
-    if command == "door":
-        room_hallway();
-    elif command == "soda":
-        print("You pick up the soda. It's very cold.")
-        INVENTORY.append('soda')
-        room_office()
-    else:
-        print("INVALID COMMAND!")
-        room_office()
-
-room_hallway_gave_soda = False
-def room_hallway():
-    global room_hallway_gave_soda
-    print("You are now in the hallway.")
-    if not room_hallway_gave_soda:
-        print("Matt is here.")
-    print("You can go down the hallway or go back into the room.")
-    command = input("$ ")
-    if command == 'give matt the soda' and 'soda' in INVENTORY and not room_hallway_gave_soda:
-        print("You give matt the soda. He gulps it down thankfully, and leaves.")
-        room_hallway_gave_soda = True
-        INVENTORY.remove('soda')
-        room_hallway()
-    else:
-        print("INVALID COMMAND!")
-        room_hallway()
-
-    
 class GameState:
     def __init__(self):
         self.inventory = []
+        self.room = 'learning'
+        self.rooms = {}
+        self.roomstate = {}
+    
+    def add_room(self, name, func):
+        self.rooms[name] = func
+        self.roomstate.setdefault(name, {})  # New
 
-state = GameState()
+    def go_to_room(self, roomname):
+        self.room = roomname
+        self.save()
+        self.rooms[roomname](self, self.roomstate[roomname])
 
-room_office(state) # this must be last
+    def save(self):
+        with open('textadv.pkl', 'wb') as f:
+            pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
+
+    def start(self):
+        self.go_to_room(self.room)
+
+    def __getstate__(self):
+        contents = self.__dict__.copy()
+        contents['rooms'] = {}
+        return contents
+
+
+if os.path.isfile('textadv.pkl') and '--clean' not in sys.argv:
+    with open('textadv.pkl', 'rb') as f:
+        state = pickle.load(f)
+        print("Loaded saved game.")
+else:
+    state = GameState()
+    print("Starting new game. Welcome.")
+
+
+def room_learning(state, roomstate):
+    print("You are in room #312. You see a Kellan, a Maria, and a Brooke.")
+    if not roomstate.get('took_soda', False): print("There is a can of soda on the table.")
+    print("Exits: DOOR")
+    command = input("> ").lower()
+    if command == "door":
+        print("You have gone through the door.")
+        state.go_to_room('hallway')
+    elif command == "kellan":
+        print("Kellan says, 'Hi!'")
+        state.go_to_room('learning')
+    elif command == "maria":
+        print("Maria is busy doing coding")
+        state.go_to_room('learning')
+    elif command == "brooke":
+        print("Brooke is writing a story")
+        state.go_to_room('learning')
+    elif command == "take the soda" and not roomstate.get('took_soda', False):
+        print("You pick up the soda. It's nice and cold.")
+        roomstate['took_soda'] = True
+        state.inventory.append('soda')
+        state.go_to_room('learning')
+    else:
+        print("INVALID COMMAND!!!")
+        state.go_to_room('learning')
+
+state.add_room('learning', room_learning)
+
+def room_hallway(state, roomstate):
+    print("You are in the hallway. It's very spoooooky.")
+    if not roomstate.get('gave_soda', False): print("Matt is here, he's very thirsty.")
+    print("Exits: LEARNING")
+    command = input("> ").lower()
+    if command == "learning":
+        print("You are going back to the learning room.")
+        state.go_to_room('learning')
+    elif command == "give matt the soda" and not roomstate.get('gave_soda', False) and 'soda' in state.inventory:
+        print("You give Matt the soda. He says thanks, gulps it down, and leaves.")
+        state.inventory.remove('soda')
+        roomstate['gave_soda'] = True
+        state.go_to_room('hallway')
+    else:
+        print("INVALID COMMAND!!!")
+        state.go_to_room('hallway')
+
+state.add_room('hallway', room_hallway)
+
+state.start()
